@@ -1,6 +1,6 @@
 ﻿// ------------------------------------------------------------------------------------------------
 // Training ~ A training program for new joinees at Metamation, Batch- July 2026.
-// Copyright (c) Metamation India.
+// Copyright (c) Trumpf Metamation India.
 // ------------------------------------------------------------------------------------------------
 // Program.cs
 // Program to find valid words from a given set of letters and
