@@ -1,7 +1,32 @@
-﻿namespace Eval;
+﻿// ------------------------------------------------------------------------------------------------
+// Training ~ A training program for new joinees at Metamation, Batch - July 2026.
+// Copyright (c) TRUMPF Metamation India.
+// ------------------------------------------------------------------------------------------------
+// Evaluator.cs
+// Evaluates expressions with operator precedence, parentheses, functions, and variable
+// assignments while handling errors
+// ------------------------------------------------------------------------------------------------
 
+namespace Eval;
+
+#region Class EvalException -----------------------------------------------------------------------
+/// <summary>Defines a custom exception class for handling evaluation errors</summary>
+/// <param name="message">Specifies the error message describing the evaluation error</param>
 class EvalException (string message) : Exception (message) { }
+#endregion
+
+#region Class Evaluator ---------------------------------------------------------------------------
+/// <summary>Evaluates expressions with operator precedence, parentheses, functions, and variable
+/// assignments while handling errors</summary>
 class Evaluator () {
+   #region Property -------------------------------------------------
+   public int BasePriority { get; private set; }
+   #endregion
+
+   #region Methods --------------------------------------------------
+   /// <summary>Evaluates a mathematical expression and returns its result</summary>
+   /// <param name="input">The expression to evaluate</param>
+   /// <returns>The evaluated result</returns>
    public double Evaluate (string input) {
       Reset ();
       Tokenizer tokenizer = new (this, input);
@@ -12,13 +37,11 @@ class Evaluator () {
          if (token is TError err) throw new EvalException (err.Message);
          tokens.Add (token);
       }
-      // Check if this is a variable assignment
-      TVariable? tVar = null;
-      if (tokens.Count > 1 && tokens[0] is TVariable tvar && tokens[1] is TOpBinary bin && bin.Op == '=') {
+      if (tokens.Count > 1 && tokens[0] is TVariable tvar && tokens[1] is TOpBinary bin
+                                                                        && bin.Op == '=') {
          tVar = tvar;
          tokens.RemoveRange (0, 2);
       }
-
       foreach (var token in tokens) Process (token);
       while (mOperators.Count > 0) ApplyOperator ();
       if (BasePriority != 0) Error ("Mismatched paranthesis");
@@ -28,14 +51,21 @@ class Evaluator () {
       if (tVar != null) mVariables[tVar.Name] = f;
       return f;
    }
+   #endregion
 
+   #region Implementations ------------------------------------------
+   // Applies the operator to the available operands
    void ApplyOperator () {
       var op = mOperators.Pop ();
       if (op is TOpUnary uni) {
-         if (mOperands.Count == 0) Error("Too few operands");
+         if (mOperands.Count == 0) Error ("Too few operands");
          else {
             double f = mOperands.Pop ();
-            mOperands.Push (uni.Apply (f));
+            if ((tTemp is not null && (uni.Op is "++" or "--")) || (uni.Op is "+" or "-")) {
+               double ans = uni.Apply (f);
+               if (tTemp is not null && (uni.Op is "++" or "--")) mVariables[tTemp.Name] = ans;
+               mOperands.Push (ans);
+            } else Error("Invalid Expression");
          }
       }
       if (op is TOpBinary bin) {
@@ -46,12 +76,15 @@ class Evaluator () {
       if (op is TOpFunc func) {
          if (mOperands.Count < 1) Error ("Too few operands");
          double f = mOperands.Pop ();
-         mOperands.Push (func.Apply (f));
+         mOperands.Push (func.Apply(f));
       }
    }
+
+   // Processes a token and updates the operand or operator stacks
    void Process (Token token) {
       switch (token) {
          case TNumber num:
+            if(num is TVariable var) tTemp = var;
             mOperands.Push (num.Value);
             break;
          case TOperator op:
@@ -65,28 +98,40 @@ class Evaluator () {
          default: Error ($"Unknown token: {token}"); break;
       }
    }
-   public int BasePriority { get; private set; }
 
+   // Resets the evaluator state before evaluating a new expression
    void Reset () {
       mOperands.Clear ();
       mOperators.Clear ();
       BasePriority = 0;
+      tVar = null;
+      tTemp = null;
    }
 
+   // Throws an evaluation exception with the specified message
    void Error (string s) => throw new EvalException (s);
+
+   // Determines whether the operator can be pushed onto the operator stack
    public bool OkToPush (TOperator op) {
       if (mOperators.Count == 0) return true;
       TOperator prev = mOperators.Peek ();
-      return prev.FinalPriority < op.FinalPriority || prev is TOpUnary;
+      return prev.FinalPriority < op.FinalPriority;
    }
 
+   // Retrieves the value of the specified variable
    public double GetVariable (string name) {
       if (mVariables.TryGetValue (name, out double value)) return value;
       Error ($"Unknown variable {name}");
       return 0;
    }
+   #endregion
 
-   Stack<double> mOperands = new ();
-   Stack<TOperator> mOperators = new ();
-   Dictionary<string, double> mVariables = [];
+   #region Fields ---------------------------------------------------
+   Stack<double> mOperands = new ();                   // Stores the operands
+   Stack<TOperator> mOperators = new ();              // Stores the operators
+   Dictionary<string, double> mVariables = [];        // Stores variable names and their assigned values
+   TVariable? tVar = null;                         // Check if this is a variable assignment
+   TVariable? tTemp = null;                       // Temporary variable for processing
+   #endregion
 }
+#endregion

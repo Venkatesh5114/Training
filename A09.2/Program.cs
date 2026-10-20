@@ -9,6 +9,7 @@
 namespace Eval;
 
 #region Class Program -----------------------------------------------------------------------------
+/// <summary> </summary>
 class Program () {
    #region Method ---------------------------------------------------
    static void Main () {
@@ -18,7 +19,7 @@ class Program () {
          string input = Console.ReadLine () ?? "";
          if (input == null || input == "") break;
          try {
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.Green;
             double result = evaluate.Evaluate (input);
             Console.WriteLine (result);
          } catch (Exception e) {

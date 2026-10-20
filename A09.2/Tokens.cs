@@ -1,18 +1,66 @@
-﻿namespace Eval;
+﻿// ------------------------------------------------------------------------------------------------
+// Training ~ A training program for new joinees at Metamation, Batch - July 2026.
+// Copyright (c) TRUMPF Metamation India.
+// ------------------------------------------------------------------------------------------------
+// Program.cs
+// Entry point to execute predefined test cases and evaluate interactive user input.
+// ------------------------------------------------------------------------------------------------
+
+namespace Eval;
 
 #region Class Token -------------------------------------------------------------------------------
+/// <summary></summary>
 class Token { }
 #endregion
 
 #region Class TNumber -----------------------------------------------------------------------------
+/// <summary></summary>
 abstract class TNumber : Token {
-   #region Method ---------------------------------------------------
+   #region Property -------------------------------------------------
    public abstract double Value { get; }
    #endregion
 }
 #endregion
 
+#region Class TLiteral ----------------------------------------------------------------------------
+/// <summary></summary>
+class TLiteral (double value) : TNumber {
+   #region Property -------------------------------------------------
+   public override double Value => mValue;
+   #endregion
+
+   #region Method ---------------------------------------------------
+   /// <summary></summary>
+   public override string ToString () => $"literal : {Value}";
+   #endregion
+
+   #region Field ----------------------------------------------------
+   readonly double mValue = value;
+   #endregion
+}
+#endregion
+
+#region Class TVariable ---------------------------------------------------------------------------
+/// <summary></summary>
+class TVariable (Evaluator eval, string name) : TNumber() {
+   #region Properties -----------------------------------------------
+   public string Name { get; } = name;
+   public override double Value => mEval.GetVariable (Name);
+   #endregion
+
+   #region Method ---------------------------------------------------
+   /// <summary></summary>
+   public override string ToString () => $"Variable : {Name}";
+   #endregion
+
+   #region Field ----------------------------------------------------
+   readonly Evaluator mEval = eval;
+   #endregion
+}
+#endregion
+
 #region Class TOperator ---------------------------------------------------------------------------
+/// <summary></summary>
 abstract class TOperator (Evaluator eval) : Token {
    #region Properties -----------------------------------------------
    public abstract int Priority { get; }
@@ -25,55 +73,16 @@ abstract class TOperator (Evaluator eval) : Token {
 }
 #endregion
 
-#region Class TLiteral ----------------------------------------------------------------------------
-class TLiteral (double value) : TNumber {
-   #region Property -------------------------------------------------
-   public override double Value => mValue;
-   #endregion
-
-   #region Method ---------------------------------------------------
-   public override string ToString () => $"literal : {Value}";
-   #endregion
-
-   #region Field ----------------------------------------------------
-   readonly double mValue = value;
-   #endregion
-}
-#endregion
-
-#region Class TVariable ---------------------------------------------------------------------------
-class TVariable : TNumber {
-   #region Constructor ----------------------------------------------
-   public TVariable (Evaluator eval, string name) => (Name, mEval) = (name, eval);
-   #endregion
-
-   #region Properties
-   public string Name { get; }
-   #endregion
-
-   #region Method ---------------------------------------------------
-   public override double Value => mEval.GetVariable (Name);
-   public override string ToString () => $"Variable : {Name}";
-   #endregion
-
-   #region Field ----------------------------------------------------
-   readonly Evaluator mEval;
-   #endregion
-}
-#endregion
-
 #region Class TOpUnary ----------------------------------------------------------------------------
-class TOpUnary : TOperator {
-   #region Constructor ----------------------------------------------
-   public TOpUnary (Evaluator eval, string op) : base (eval) => Op = op;
-   #endregion
-
+/// <summary></summary>
+class TOpUnary (Evaluator eval, string op) : TOperator(eval) {
    #region Properties -----------------------------------------------
-   public override int Priority => 5 + mEval.BasePriority;
-   public string Op { get; }
+   public override int Priority => 6 + mEval.BasePriority;
+   public string Op { get; } = op;
    #endregion
 
    #region Methods --------------------------------------------------
+   /// <summary></summary>
    public double Apply (double num) {
       return Op switch {
          "+" => num,
@@ -83,18 +92,26 @@ class TOpUnary : TOperator {
          _ => throw new InvalidOperationException (),
       };
    }
+
+   /// <summary></summary>
    public override string ToString () => $"Unary : {Op}";
    #endregion
 }
 #endregion
-class TOpBinary : TOperator {
-   public TOpBinary (Evaluator eval, char op) : base (eval) => Op = op;
+
+#region Class TOpBinary ---------------------------------------------------------------------------
+/// <summary></summary>
+class TOpBinary (Evaluator eval, char op) : TOperator(eval) {
+   #region Properties -----------------------------------------------
    public override int Priority => sPriority[Op] + mEval.BasePriority;
-   static Dictionary<char, int> sPriority = new () {
-      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 3, ['='] = 4,
-   };
-   public char Op { get; }
+   public char Op { get; } = op;
+   #endregion
+
+   #region Methods --------------------------------------------------
+   /// <summary></summary>
    public override string ToString () => $"Operator : {Op}";
+
+   /// <summary></summary>
    public double Apply (double a, double b)
       => Op switch {
          '+' => a + b,
@@ -104,12 +121,29 @@ class TOpBinary : TOperator {
          '^' => Math.Pow (a, b),
          _ => throw new InvalidOperationException (),
       };
+   #endregion
+
+   #region Field ----------------------------------------------------
+   static Dictionary<char, int> sPriority = new () {
+      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 3, ['='] = 4,
+   };
+   #endregion
 }
-class TOpFunc : TOperator {
-   public TOpFunc (Evaluator eval, string func) : base (eval) => Func = func;
-   public string Func { get; }
+#endregion
+
+#region Class TOpFunc -----------------------------------------------------------------------------
+/// <summary></summary>
+class TOpFunc (Evaluator eval, string func) : TOperator(eval) {
+   #region Properties -----------------------------------------------
+   public string Func { get; } = func;
+   public override int Priority => 5 + mEval.BasePriority;
+   #endregion
+
+   #region Methods --------------------------------------------------
+   /// <summary></summary>
    public override string ToString () => $"Function : {Func}";
-   public override int Priority => 6 + mEval.BasePriority;
+
+   /// <summary></summary>
    public double Apply (double f) {
       return Func switch {
          "sin" => Math.Sin (D2R (f)),
@@ -126,18 +160,44 @@ class TOpFunc : TOperator {
       double D2R (double f) => f * Math.PI / 180;
       double R2D (double f) => f * 180 / Math.PI;
    }
+   #endregion
 }
-class TEnd : Token {
-   public override string ToString () => "end";
+#endregion
 
+#region Class TEnd --------------------------------------------------------------------------------
+/// <summary></summary>
+class TEnd : Token {
+   #region Method ---------------------------------------------------
+   /// <summary></summary>
+   public override string ToString () => "end";
+   #endregion
 }
-class TError : Token {
-   public TError (string msg) => Message = msg;
-   public string Message { get; }
+#endregion
+
+#region Class TError ------------------------------------------------------------------------------
+/// <summary></summary>
+class TError (string msg) : Token {
+   #region Property -------------------------------------------------
+   public string Message { get; } = msg;
+   #endregion
+
+   #region Method ---------------------------------------------------
+   /// <summary></summary>
    public override string ToString () => $"Error : {Message}";
+   #endregion
 }
-class TPunctuation : Token {
-   public TPunctuation (char p) => Punct = p;
-   public char Punct { get; }
+#endregion
+
+#region Class TPunctuation ------------------------------------------------------------------------
+/// <summary></summary>
+class TPunctuation (char punct) : Token {
+   #region Property -------------------------------------------------
+   public char Punct { get; } = punct;
+   #endregion
+
+   #region Method ---------------------------------------------------
+   /// <summary></summary>
    public override string ToString () => $"Punctuation : {Punct}";
+   #endregion
 }
+#endregion
