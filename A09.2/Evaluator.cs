@@ -7,6 +7,8 @@
 // assignments while handling errors
 // ------------------------------------------------------------------------------------------------
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace Eval;
 
 #region Class EvalException -----------------------------------------------------------------------
@@ -30,15 +32,15 @@ class Evaluator () {
    public double Evaluate (string input) {
       Reset ();
       Tokenizer tokenizer = new (this, input);
-      List<Token> tokens = [];
       for (; ; ) {
          var token = tokenizer.GetNext ();
          if (token is TEnd) break;
          if (token is TError err) throw new EvalException (err.Message);
          tokens.Add (token);
       }
+      // Identify a variable assignment and remove the variable and '=' tokens from the expression
       if (tokens.Count > 1 && tokens[0] is TVariable tvar && tokens[1] is TOpBinary bin
-                                                                        && bin.Op == '=') {
+                                                                          && bin.Op == '=') {
          tVar = tvar;
          tokens.RemoveRange (0, 2);
       }
@@ -65,18 +67,23 @@ class Evaluator () {
                double ans = uni.Apply (f);
                if (tTemp is not null && (uni.Op is "++" or "--")) mVariables[tTemp.Name] = ans;
                mOperands.Push (ans);
-            } else Error("Invalid Expression");
+            } else Error ("Invalid Expression");
          }
       }
       if (op is TOpBinary bin) {
+         if(bin.Op == '=') Error("Unexpected '=' operator");
          if (mOperands.Count < 2) Error ("Too few operands");
-         double f1 = mOperands.Pop (), f2 = mOperands.Pop ();
-         mOperands.Push (bin.Apply (f2, f1));
+         else {
+            double f1 = mOperands.Pop (), f2 = mOperands.Pop ();
+            mOperands.Push (bin.Apply (f2, f1));
+         }
       }
       if (op is TOpFunc func) {
          if (mOperands.Count < 1) Error ("Too few operands");
-         double f = mOperands.Pop ();
-         mOperands.Push (func.Apply(f));
+         else {
+            double f = mOperands.Pop ();
+            mOperands.Push (func.Apply (f));
+         }
       }
    }
 
@@ -84,7 +91,7 @@ class Evaluator () {
    void Process (Token token) {
       switch (token) {
          case TNumber num:
-            if(num is TVariable var) tTemp = var;
+            if (num is TVariable var) tTemp = var;
             mOperands.Push (num.Value);
             break;
          case TOperator op:
@@ -101,6 +108,7 @@ class Evaluator () {
 
    // Resets the evaluator state before evaluating a new expression
    void Reset () {
+      tokens.Clear ();
       mOperands.Clear ();
       mOperators.Clear ();
       BasePriority = 0;
@@ -115,7 +123,9 @@ class Evaluator () {
    public bool OkToPush (TOperator op) {
       if (mOperators.Count == 0) return true;
       TOperator prev = mOperators.Peek ();
-      return prev.FinalPriority < op.FinalPriority;
+      return prev.FinalPriority < op.FinalPriority ||
+             (prev.FinalPriority == op.FinalPriority && op is TOpBinary { Op: '^' }) ||
+             (prev is TOpUnary && op is TOpFunc or TOpBinary { Op: '^' });
    }
 
    // Retrieves the value of the specified variable
@@ -127,11 +137,12 @@ class Evaluator () {
    #endregion
 
    #region Fields ---------------------------------------------------
-   Stack<double> mOperands = new ();                   // Stores the operands
+   List<Token> tokens = [];                           // Stores the tokens
+   Stack<double> mOperands = new ();                  // Stores the operands
    Stack<TOperator> mOperators = new ();              // Stores the operators
-   Dictionary<string, double> mVariables = [];        // Stores variable names and their assigned values
-   TVariable? tVar = null;                         // Check if this is a variable assignment
-   TVariable? tTemp = null;                       // Temporary variable for processing
+   Dictionary<string, double> mVariables = [];        // Stores variable names and their values
+   TVariable? tVar = null;                            // Check if this is a variable assignment
+   TVariable? tTemp = null;                           // Temporary variable for processing
    #endregion
 }
 #endregion

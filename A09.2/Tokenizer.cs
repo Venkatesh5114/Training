@@ -6,19 +6,13 @@
 // Parses the input expression and generates tokens for evaluation
 // ------------------------------------------------------------------------------------------------
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace Eval;
 
 #region Class Tokenizer ---------------------------------------------------------------------------
 /// <summary>Parses the input expression and generates tokens for evaluation</summary>
-class Tokenizer {
-   #region Constructor ----------------------------------------------
-   public Tokenizer (Evaluator eval, string input) {
-      mText = input;
-      mN = 0;
-      mEval = eval;
-   }
-   #endregion
-
+class Tokenizer (Evaluator eval, string input) {
    #region Method ---------------------------------------------------
    /// <summary>Returns the next token from the input expression</summary>
    public Token GetNext () => mPrevToken = PrevToken ();
@@ -31,8 +25,8 @@ class Tokenizer {
          char c = mText[mN++];
          switch (c) {
             case '+' or '-':
-               if ((mPrevToken is null or TPunctuation { Punct: '(' } or TOperator) &&
-                    mPrevToken is not TNumber) return UnaryOp ();
+               if ((mPrevToken is null or TPunctuation { Punct: '(' } or TOperator))
+                  return UnaryOp ();
                else return new TOpBinary (mEval, c);
             case '*' or '/' or '^' or '=': return new TOpBinary (mEval, c);
             case ' ': continue;
@@ -82,10 +76,11 @@ class Tokenizer {
    #endregion
 
    #region Fields ---------------------------------------------------
-   readonly string mText;        // The input text we're parsing through
-   readonly Evaluator mEval;     // The evaluator that owns this
-   int mN;                       // Position within the text
-   Token? mPrevToken;
+   readonly string mText = input;        // The input text we're parsing through
+   readonly Evaluator mEval = eval;      // The evaluator that owns this
+   int mN = 0;                           // Position within the text
+   Token? mPrevToken;                    // Stores the previous token
+   // Contains all the valid functions
    readonly string[] mFuncs = { "sin", "cos", "tan", "sqrt", "log", "exp", "asin", "acos", "atan" };
    #endregion
 }
