@@ -10,7 +10,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Eval;
 
-#region Class Tokenizer ---------------------------------------------------------------------------
+#region class Tokenizer ---------------------------------------------------------------------------
 /// <summary>Parses the input expression and generates tokens for evaluation</summary>
 class Tokenizer (Evaluator eval, string input) {
    #region Method ---------------------------------------------------
@@ -18,7 +18,7 @@ class Tokenizer (Evaluator eval, string input) {
    public Token GetNext () => mPrevToken = PrevToken ();
    #endregion
 
-   #region Implementations ------------------------------------------
+   #region Implementation -------------------------------------------
    // Reads the next token based on the current character
    Token PrevToken () {
       while (mN < mText.Length) {
@@ -75,7 +75,7 @@ class Tokenizer (Evaluator eval, string input) {
    }
    #endregion
 
-   #region Fields ---------------------------------------------------
+   #region Private Data ---------------------------------------------
    readonly string mText = input;        // The input text we're parsing through
    readonly Evaluator mEval = eval;      // The evaluator that owns this
    int mN = 0;                           // Position within the text

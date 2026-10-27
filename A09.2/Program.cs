@@ -8,7 +8,7 @@
 
 namespace Eval;
 
-#region Class Program -----------------------------------------------------------------------------
+#region class Program -----------------------------------------------------------------------------
 /// <summary>Runs the expression evaluator and its test cases</summary>
 class Program () {
    #region Method ---------------------------------------------------
@@ -23,7 +23,7 @@ class Program () {
    }
    #endregion
 
-   #region Implementations ------------------------------------------
+   #region Implementation -------------------------------------------
    // Evaluates user-entered expressions and displays results or errors
    static void InteractiveMode () {
       var evaluate = new Evaluator ();
@@ -76,17 +76,21 @@ class Program () {
          ("10-3-2", 5),
          ("20/5/2", 2),
          ("2^3^2", 512),
+         ("-2^2", -4),
+         ("(-2)^2", 4),
          // Invalid cases
          ("2 + (3* 4", NAN),
          ("2  (3* 4)", NAN),
          // Mathematical functions
-         ("sqrt(16)", 4),
-         ("sin(30)", 0.5),
+         ("sqrt 16", 4),
+         ("sin 30", 0.5),
          ("cos(60)", 0.5),
          ("log(1)", 0),
          ("exp(0)", 1),
          ("asin(0.5)", 30),
          ("acos(0.5)", 60),
+         ("cos(-60)", 0.5),
+         ("-cos(60)", -0.5),
          // Invalid cases
          ("abs(-23)", NAN),
          // Variable assignment and retrieval

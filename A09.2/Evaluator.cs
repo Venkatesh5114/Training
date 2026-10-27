@@ -7,17 +7,15 @@
 // assignments while handling errors
 // ------------------------------------------------------------------------------------------------
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Eval;
 
-#region Class EvalException -----------------------------------------------------------------------
+#region class EvalException -----------------------------------------------------------------------
 /// <summary>Defines a custom exception class for handling evaluation errors</summary>
 /// <param name="message">Specifies the error message describing the evaluation error</param>
 class EvalException (string message) : Exception (message) { }
 #endregion
 
-#region Class Evaluator ---------------------------------------------------------------------------
+#region class Evaluator ---------------------------------------------------------------------------
 /// <summary>Evaluates expressions with operator precedence, parentheses, functions, and variable
 /// assignments while handling errors</summary>
 class Evaluator () {
@@ -25,7 +23,7 @@ class Evaluator () {
    public int BasePriority { get; private set; }
    #endregion
 
-   #region Methods --------------------------------------------------
+   #region Method ---------------------------------------------------
    /// <summary>Evaluates a mathematical expression and returns its result</summary>
    /// <param name="input">The expression to evaluate</param>
    /// <returns>The evaluated result</returns>
@@ -55,7 +53,7 @@ class Evaluator () {
    }
    #endregion
 
-   #region Implementations ------------------------------------------
+   #region Implementation -------------------------------------------
    // Applies the operator to the available operands
    void ApplyOperator () {
       var op = mOperators.Pop ();
@@ -125,7 +123,9 @@ class Evaluator () {
       TOperator prev = mOperators.Peek ();
       return prev.FinalPriority < op.FinalPriority ||
              (prev.FinalPriority == op.FinalPriority && op is TOpBinary { Op: '^' }) ||
-             (prev is TOpUnary && op is TOpFunc or TOpBinary { Op: '^' });
+             (prev is TOpUnary && op is TOpFunc) ||
+             (prev is TOpUnary or TOpFunc && op is TOpBinary { Op: '^' } &&
+             prev.FinalPriority - op.FinalPriority < 10);
    }
 
    // Retrieves the value of the specified variable
@@ -136,7 +136,7 @@ class Evaluator () {
    }
    #endregion
 
-   #region Fields ---------------------------------------------------
+   #region Private Data ---------------------------------------------
    List<Token> tokens = [];                           // Stores the tokens
    Stack<double> mOperands = new ();                  // Stores the operands
    Stack<TOperator> mOperators = new ();              // Stores the operators
