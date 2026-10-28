@@ -75,7 +75,7 @@ abstract class TOperator (Evaluator eval) : Token {
 /// <summary>Represents unary operators such as "+", "-", "++", and "--"</summary>
 class TOpUnary (Evaluator eval, string op) : TOperator (eval) {
    #region Property -------------------------------------------------
-   public override int Priority => 5;
+   public override int Priority => 3 + mEval.BasePriority;
    public string Op { get; } = op;
    #endregion
 
@@ -90,7 +90,7 @@ class TOpUnary (Evaluator eval, string op) : TOperator (eval) {
       };
    }
 
-   public override string ToString () => $"Unary : {Op}";
+   public override string ToString () => $"Unary : {Op} Priority: {Priority}";
    #endregion
 }
 #endregion
@@ -99,7 +99,7 @@ class TOpUnary (Evaluator eval, string op) : TOperator (eval) {
 /// <summary>Represents binary operators such as '+', '-', '*', '/', '^', and '='</summary>
 class TOpBinary (Evaluator eval, char op) : TOperator (eval) {
    #region Property -------------------------------------------------
-   public override int Priority => sPriority[Op];
+   public override int Priority => sPriority[Op] + mEval.BasePriority;
    public char Op { get; } = op;
    #endregion
 
@@ -114,12 +114,12 @@ class TOpBinary (Evaluator eval, char op) : TOperator (eval) {
          _ => throw new EvalException ($"Unknown Operator '{Op}'"),
       };
 
-   public override string ToString () => $"Operator : {Op}";
+   public override string ToString () => $"Operator : {Op} Priority: {Priority}";
    #endregion
 
    #region Private data ---------------------------------------------
    static Dictionary<char, int> sPriority = new () {
-      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 3, ['='] = 0,
+      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 5, ['='] = 0,
    };
    #endregion
 }
@@ -130,7 +130,7 @@ class TOpBinary (Evaluator eval, char op) : TOperator (eval) {
 class TOpFunc (Evaluator eval, string func) : TOperator (eval) {
    #region Property -------------------------------------------------
    public string Func { get; } = func;
-   public override int Priority => 4;
+   public override int Priority => 4 + mEval.BasePriority;
    #endregion
 
    #region Method ---------------------------------------------------
@@ -151,7 +151,7 @@ class TOpFunc (Evaluator eval, string func) : TOperator (eval) {
       double R2D (double f) => f * 180 / Math.PI;
    }
 
-   public override string ToString () => $"Function : {Func}";
+   public override string ToString () => $"Function : {Func} Priority: {Priority}";
    #endregion
 }
 #endregion

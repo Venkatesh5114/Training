@@ -93,8 +93,7 @@ class Evaluator () {
             mOperands.Push (num.Value);
             break;
          case TOperator op:
-            op.FinalPriority = op.Priority + BasePriority;
-            while (!OkToPush (op)) ApplyOperator ();
+            if(op is not (TOpUnary or TOpFunc)) while (!OkToPush (op)) ApplyOperator ();
             mOperators.Push (op);
             break;
          case TPunctuation p:
@@ -122,10 +121,7 @@ class Evaluator () {
       if (mOperators.Count == 0) return true;
       TOperator prev = mOperators.Peek ();
       return prev.FinalPriority < op.FinalPriority ||
-             (prev.FinalPriority == op.FinalPriority && op is TOpBinary { Op: '^' }) ||
-             (prev is TOpUnary && op is TOpFunc) ||
-             (prev is TOpUnary or TOpFunc && op is TOpBinary { Op: '^' } &&
-             prev.FinalPriority - op.FinalPriority < 10);
+             (prev.FinalPriority == op.FinalPriority && op is TOpBinary { Op: '^'});
    }
 
    // Retrieves the value of the specified variable
