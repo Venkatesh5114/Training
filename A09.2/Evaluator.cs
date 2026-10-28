@@ -19,10 +19,6 @@ class EvalException (string message) : Exception (message) { }
 /// <summary>Evaluates expressions with operator precedence, parentheses, functions, and variable
 /// assignments while handling errors</summary>
 class Evaluator () {
-   #region Property -------------------------------------------------
-   public int BasePriority { get; private set; }
-   #endregion
-
    #region Method ---------------------------------------------------
    /// <summary>Evaluates a mathematical expression and returns its result</summary>
    /// <param name="input">The expression to evaluate</param>
@@ -36,6 +32,7 @@ class Evaluator () {
          if (token is TError err) throw new EvalException (err.Message);
          tokens.Add (token);
       }
+      if (tokenizer.BasePriority != 0) Error ("Mismatched Paranthesis");
       // Identify a variable assignment and remove the variable and '=' tokens from the expression
       if (tokens.Count > 1 && tokens[0] is TVariable tvar && tokens[1] is TOpBinary bin
                                                                           && bin.Op == '=') {
@@ -44,7 +41,6 @@ class Evaluator () {
       }
       foreach (var token in tokens) Process (token);
       while (mOperators.Count > 0) ApplyOperator ();
-      if (BasePriority != 0) Error ("Mismatched paranthesis");
       if (mOperators.Count > 0) Error ("Too many operators");
       if (mOperands.Count > 1) Error ("Too many operands");
       double f = mOperands.Pop ();
@@ -96,8 +92,7 @@ class Evaluator () {
             if(op is not (TOpUnary or TOpFunc)) while (!OkToPush (op)) ApplyOperator ();
             mOperators.Push (op);
             break;
-         case TPunctuation p:
-            BasePriority += p.Punct == '(' ? 10 : -10;
+         case TPunctuation:
             break;
          default: Error ($"Unknown token: {token}"); break;
       }
@@ -108,7 +103,6 @@ class Evaluator () {
       tokens.Clear ();
       mOperands.Clear ();
       mOperators.Clear ();
-      BasePriority = 0;
       tVar = null;
       tTemp = null;
    }
@@ -120,8 +114,8 @@ class Evaluator () {
    public bool OkToPush (TOperator op) {
       if (mOperators.Count == 0) return true;
       TOperator prev = mOperators.Peek ();
-      return prev.FinalPriority < op.FinalPriority ||
-             (prev.FinalPriority == op.FinalPriority && op is TOpBinary { Op: '^'});
+      return prev.Priority < op.Priority ||
+             (prev.Priority == op.Priority && op is TOpBinary { Op: '^'});
    }
 
    // Retrieves the value of the specified variable

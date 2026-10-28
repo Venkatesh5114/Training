@@ -59,23 +59,18 @@ class TVariable (Evaluator eval, string name) : TNumber () {
 
 #region class TOperator ---------------------------------------------------------------------------
 /// <summary>Abstract base class for operators, providing priority and evaluator access</summary>
-abstract class TOperator (Evaluator eval) : Token {
+abstract class TOperator () : Token {
    #region Property -------------------------------------------------
    public abstract int Priority { get; }
-   public int FinalPriority { get; set; }
-   #endregion
-
-   #region Private data ---------------------------------------------
-   readonly protected Evaluator mEval = eval;
    #endregion
 }
 #endregion
 
 #region class TOpUnary ----------------------------------------------------------------------------
 /// <summary>Represents unary operators such as "+", "-", "++", and "--"</summary>
-class TOpUnary (Evaluator eval, string op) : TOperator (eval) {
+class TOpUnary (Tokenizer tokenizer, string op) : TOperator {
    #region Property -------------------------------------------------
-   public override int Priority => 3 + mEval.BasePriority;
+   public override int Priority { get; } = 3 + tokenizer.BasePriority;
    public string Op { get; } = op;
    #endregion
 
@@ -97,9 +92,9 @@ class TOpUnary (Evaluator eval, string op) : TOperator (eval) {
 
 #region class TOpBinary ---------------------------------------------------------------------------
 /// <summary>Represents binary operators such as '+', '-', '*', '/', '^', and '='</summary>
-class TOpBinary (Evaluator eval, char op) : TOperator (eval) {
+class TOpBinary (Tokenizer tokenizer, char op) : TOperator {
    #region Property -------------------------------------------------
-   public override int Priority => sPriority[Op] + mEval.BasePriority;
+   public override int Priority { get; } = sPriority[op] + tokenizer.BasePriority;
    public char Op { get; } = op;
    #endregion
 
@@ -127,10 +122,10 @@ class TOpBinary (Evaluator eval, char op) : TOperator (eval) {
 
 #region class TOpFunc -----------------------------------------------------------------------------
 /// <summary>Represents mathematical functions</summary>
-class TOpFunc (Evaluator eval, string func) : TOperator (eval) {
+class TOpFunc (Tokenizer tokenizer, string func) : TOperator {
    #region Property -------------------------------------------------
    public string Func { get; } = func;
-   public override int Priority => 4 + mEval.BasePriority;
+   public override int Priority { get; } = 4 + tokenizer.BasePriority;
    #endregion
 
    #region Method ---------------------------------------------------

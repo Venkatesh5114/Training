@@ -13,6 +13,10 @@ namespace Eval;
 #region class Tokenizer ---------------------------------------------------------------------------
 /// <summary>Parses the input expression and generates tokens for evaluation</summary>
 class Tokenizer (Evaluator eval, string input) {
+   #region Property -------------------------------------------------
+   public int BasePriority { get; private set; }
+   #endregion
+
    #region Method ---------------------------------------------------
    /// <summary>Returns the next token from the input expression</summary>
    public Token GetNext () => mPrevToken = PrevToken ();
@@ -27,11 +31,11 @@ class Tokenizer (Evaluator eval, string input) {
             case '+' or '-':
                if ((mPrevToken is null or TPunctuation { Punct: '(' } or TOperator))
                   return UnaryOp ();
-               else return new TOpBinary (mEval, c);
-            case '*' or '/' or '^' or '=': return new TOpBinary (mEval, c);
+               else return new TOpBinary (this, c);
+            case '*' or '/' or '^' or '=': return new TOpBinary (this, c);
             case ' ': continue;
             case >= '0' and <= '9': return Literal ();
-            case '(' or ')': return new TPunctuation (c);
+            case '(' or ')': BasePriority += c == '(' ? 10 : -10; return new TPunctuation (c);
             case (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'): return Identifier ();
             default: return new TError ($"Unexpected character {c}");
          }
@@ -59,7 +63,7 @@ class Tokenizer (Evaluator eval, string input) {
          if (!(char.IsDigit (ch) || char.IsLetter (ch))) { mN--; break; }
       }
       string identifier = mText[start..mN];
-      if (mFuncs.Contains (identifier)) return new TOpFunc (mEval, identifier);
+      if (mFuncs.Contains (identifier)) return new TOpFunc (this, identifier);
       else return new TVariable (mEval, identifier);
    }
 
@@ -69,9 +73,9 @@ class Tokenizer (Evaluator eval, string input) {
       char nextOp = mN < mText.Length ? mText[mN] : '\0';
       if (currOp == nextOp) {
          mN++;
-         return new TOpUnary (mEval, $"{currOp}{nextOp}");
+         return new TOpUnary (this, $"{currOp}{nextOp}");
       }
-      return new TOpUnary (mEval, currOp.ToString ());
+      return new TOpUnary (this, currOp.ToString ());
    }
    #endregion
 
