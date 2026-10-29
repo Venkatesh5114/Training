@@ -1,4 +1,6 @@
-﻿namespace A10._1;
+﻿
+
+namespace A10._1;
 
 using static EState;
 
@@ -6,20 +8,26 @@ using static EState;
 class Program {
    #region Method ---------------------------------------------------
    static void Main () {
-      string[] inputs = [@"Cz:\abc\def\r.txt", @"C:\abc\def\readme.txt", @"C:\README.TXT", @"C:\abc\.bcf",
-                         @"C:\abc\bcf.", @"Readme.txt", @"C:\abc\def", @"C:\abc d", @"\abcd\Readme.txt", " ",
-                         @"C:\ab.c\def\r.txt", @"C:\abc:d", @".\abc", ".abc", "abc", @"C:\abc6\def\r.txt",
-                         @"C:\DIR\ARCHIVE.TAR.GZ", @"C:\work\r.txt", @"C:\\work~\\r.txt~",
-                         @"C:\A\B\C\D\E\F\G\FILE.TXT", @"C:\DIR\\FILE.TXT",@"D:\WORK\TRAINING\FILE.TXT"];
-      Console.WriteLine ($"{"Input"}");
-      foreach(string input in inputs) {
-         Console.WriteLine (FileParse(input));
+      string[] inputs = [@"D:\WORK\TRAINING\FILE.TXT", @"C:\A\B\C\D\E\F\G\FILE.TXT",
+                         @"CZ:\AB\CD\E.TXT", @"C:README.TXT", @"C:\README.TXT", @"C:\AB\READ.",
+                         @"c:\aBc\readme.txt", @"READ.TXT", @"C:\A\B", " ", "abc", @".\ABC",".abc",
+                         @"\AB\READ.TXT", @"C:\A.B\DE\R.TXT", @"C:\AB:DC", @"C:\WORK\R.TXT#",
+                         @"C:\DIR\ARCHIVE.TAR.GZ", @"C:\WORK23\R.TXT", @"C:\DIR\\FILE.TXT",];
+      Console.WriteLine ($" {"Input",-30}| {"Drive",-5}| {"Directory",-15}| {"FileName",-10}| " +
+                         $"{"Extension",-10}| {"Status",-10}");
+      Console.WriteLine (string.Join ("", Enumerable.Repeat ('-', 100)));
+      foreach (string input in inputs) {
+         var (drive, dir, fileName, ext, isPassed) = FileParse (input);
+         Console.Write ($" {input,-30}| {drive,-5}| {dir,-15}| {fileName,-10}| {ext,-10}| ");
+         Console.ForegroundColor = isPassed ? ConsoleColor.Green : ConsoleColor.Red;
+         Console.WriteLine ($"{(isPassed ? "Pass" : "Fail"),-10}");
+         Console.ResetColor ();
       }
    }
    #endregion
 
    #region Implementation -------------------------------------------
-   static (string, string, string, string,bool ) FileParse (string input) {
+   static (string, string, string, string, bool) FileParse (string input) {
       input = input.Trim () + "~";
       EState s = A;
       Action none = () => { };
@@ -31,24 +39,22 @@ class Program {
             (B, ':') => (C, none),
             (C, '\\') => (D, none),
             (D or E, >= 'A' and <= 'Z') => (E, () => file += c),
-            (E, '\\') => (F, () => (dir, file) = (dir += file, "")),
-            (F or G, >= 'A' and <= 'Z') => (G, () => file += c),
-            (G, '\\') => (F, () => (dir, file) = (dir = dir + "," + file, "")),
-            (G, '.') => (H, none),
-            (H or I, >= 'A' and <= 'Z') => (I, () => ext += c),
-            (I, '~') => (J, none),
+            (E, '\\') => (D, () => (dir, file) = (dir = dir.Length == 0 ? file : dir + ',' + file, "")),
+            (E, '.') => (s = dir.Length == 0 ? Z : F, none),
+            (F or G, >= 'A' and <= 'Z') => (G, () => ext += c),
+            (G, '~') => (H, none),
             _ => (Z, none),
          };
          todo ();
       }
-      bool isPass = s == J;
+      bool isPass = s == H;
       if (isPass) return (dL, dir, file, ext, isPass);
-      return ("", "", "", "", isPass);
+      return ("-", "-", "-", "-", isPass);
    }
    #endregion
 }
 #endregion
 
 #region Enum EState -------------------------------------------------------------------------------
-enum EState { A, B, C, D, E, F, G, H, I, J, Z };
+enum EState { A, B, C, D, E, F, G, H, Z };
 #endregion
