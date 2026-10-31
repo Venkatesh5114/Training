@@ -114,7 +114,7 @@ class TOpBinary (Tokenizer tokenizer, char op) : TOperator {
 
    #region Private data ---------------------------------------------
    static Dictionary<char, int> sPriority = new () {
-      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 5, ['='] = 0,
+      ['+'] = 1, ['-'] = 1, ['*'] = 2, ['/'] = 2, ['^'] = 4, ['='] = 0,
    };
    #endregion
 }
@@ -125,7 +125,7 @@ class TOpBinary (Tokenizer tokenizer, char op) : TOperator {
 class TOpFunc (Tokenizer tokenizer, string func) : TOperator {
    #region Property -------------------------------------------------
    public string Func { get; } = func;
-   public override int Priority { get; } = 4 + tokenizer.BasePriority;
+   public override int Priority { get; } = 5 + tokenizer.BasePriority;
    #endregion
 
    #region Method ---------------------------------------------------

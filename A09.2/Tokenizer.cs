@@ -29,13 +29,17 @@ class Tokenizer (Evaluator eval, string input) {
          char c = mText[mN++];
          switch (c) {
             case '+' or '-':
-               if ((mPrevToken is null or TPunctuation { Punct: '(' } or TOperator))
+               if ((mPrevToken is null or TPunctuation { Punct: '(' }))
                   return UnaryOp ();
-               else return new TOpBinary (this, c);
+               if (mPrevToken is TOperator) return new TError ("Invalid Expression");
+               return new TOpBinary (this, c);
             case '*' or '/' or '^' or '=': return new TOpBinary (this, c);
             case ' ': continue;
             case >= '0' and <= '9': return Literal ();
-            case '(' or ')': BasePriority += c == '(' ? 10 : -10; return new TPunctuation (c);
+            case '(' or ')':
+               BasePriority += c == '(' ? 10 : -10;
+               if (BasePriority < 0) return new TError ("Unexpected ')' parenthesis");
+               return new TPunctuation (c);
             case (>= 'a' and <= 'z') or (>= 'A' and <= 'Z'): return Identifier ();
             default: return new TError ($"Unexpected character {c}");
          }
@@ -63,8 +67,10 @@ class Tokenizer (Evaluator eval, string input) {
          if (!(char.IsDigit (ch) || char.IsLetter (ch))) { mN--; break; }
       }
       string identifier = mText[start..mN];
-      if (mFuncs.Contains (identifier)) return new TOpFunc (this, identifier);
-      else return new TVariable (mEval, identifier);
+      if (mFuncs.Contains (identifier)) {
+         if (mText[mN + 1] == '(') return new TOpFunc (this, identifier);
+         else return new TError ("Required '(' after function");
+      } else return new TVariable (mEval, identifier);
    }
 
    // Identifies and returns a unary operator, including repeated operators
