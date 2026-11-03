@@ -8,7 +8,7 @@
 
 #region class DeQue -------------------------------------------------------------------------------
 /// <summary>Implementation of custom queue that adds and removes elements in FIFO order</summary>
-class TDeQueue<T> {
+class TDeQue<T> {
    #region Property -------------------------------------------------
    /// <summary>Checks whether the queue contains no elements</summary>
    public bool IsEmpty => mCount == 0;
@@ -16,7 +16,7 @@ class TDeQueue<T> {
 
    #region Methods --------------------------------------------------
    /// <summary>Adds an element to the rear of the queue</summary>
-   public void EnqueueTail (T value) {
+   public void EnqueueRear (T value) {
       if (mCount == mData.Length) Resize ();
       mData[mEnd] = value;
       mEnd = (mEnd + 1) % mData.Length;
@@ -24,7 +24,7 @@ class TDeQueue<T> {
    }
 
    /// <summary>Adds an element to the front of the queue</summary>
-   public void EnqueueHead (T value) {
+   public void EnqueueFront (T value) {
       if (mCount == mData.Length) Resize ();
       mStart = (mStart + mData.Length - 1) % mData.Length;
       mData[mStart] = value;
@@ -32,7 +32,7 @@ class TDeQueue<T> {
    }
 
    /// <summary>Removes and returns the element from the front of the queue</summary>
-   public T DequeueHead () {
+   public T DequeueFront () {
       if (IsEmpty) throw new InvalidOperationException ("Queue Empty");
       T value = mData[mStart];
       mData[mStart] = default!;
@@ -42,11 +42,11 @@ class TDeQueue<T> {
    }
 
    /// <summary>Removes and returns the element from the rear of the queue</summary>
-   public T DequeueTail () {
+   public T DequeueRear () {
       if (IsEmpty) throw new InvalidOperationException ("Queue Empty");
+      mEnd = (mEnd - 1) % mData.Length;
       T value = mData[mEnd];
       mData[mEnd] = default!;
-      mEnd = (mEnd - 1) % mData.Length;
       mCount--;
       return value;
    }
@@ -66,7 +66,7 @@ class TDeQueue<T> {
    #region Fields ---------------------------------------------------
    T[] mData = new T[4];    // Stores the queue elements
    int mEnd = 0;            // Index of the next element to be added
-   int mStart = 0;           // Index of the next element to be removed
+   int mStart = 0;          // Index of the next element to be removed
    int mCount = 0;          // Number of elements currently in the queue
    #endregion
 }
