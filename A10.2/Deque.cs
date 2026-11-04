@@ -3,7 +3,7 @@
 // Copyright (c) TRUMPF Metamation India.
 // ------------------------------------------------------------------------------------------------
 // Queue.cs
-// Queue implementation with circular buffer.
+// Double Ended Queue implementation with circular buffer.
 // ------------------------------------------------------------------------------------------------
 
 #region class DeQue -------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ class TDeQue<T> {
    /// <summary>Removes and returns the element from the rear of the queue</summary>
    public T DequeueRear () {
       if (IsEmpty) throw new InvalidOperationException ("Queue Empty");
-      mEnd = (mEnd - 1) % mData.Length;
+      mEnd = (mEnd + mData.Length - 1) % mData.Length;
       T value = mData[mEnd];
       mData[mEnd] = default!;
       mCount--;

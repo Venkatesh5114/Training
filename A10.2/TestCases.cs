@@ -35,12 +35,18 @@ class TestCases {
       Console.WriteLine (message);
    }
 
-   // Dequeue from an empty queue
+   // Dequeue front and rear from an empty queue
    static void Test1 () {
       TDeQue<int> queue = new ();
       bool iPassed = false;
       try {
          queue.DequeueFront ();
+      } catch (InvalidOperationException) {
+         iPassed = true;
+      }
+      iPassed &= false;
+      try {
+         queue.DequeueRear ();
       } catch (InvalidOperationException) {
          iPassed = true;
       }
