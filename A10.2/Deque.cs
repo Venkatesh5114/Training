@@ -12,6 +12,8 @@ class TDeQue<T> {
    #region Property -------------------------------------------------
    /// <summary>Checks whether the queue contains no elements</summary>
    public bool IsEmpty => mCount == 0;
+
+   public int Count => mCount;
    #endregion
 
    #region Methods --------------------------------------------------
