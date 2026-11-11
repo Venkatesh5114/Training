@@ -8,7 +8,7 @@
 
 #region class DeQue -------------------------------------------------------------------------------
 /// <summary>Implementation of custom queue that adds and removes elements in FIFO order</summary>
-class TDeQue<T> {
+class TDeque<T> {
    #region Property -------------------------------------------------
    /// <summary>Checks whether the queue contains no elements</summary>
    public bool IsEmpty => mCount == 0;
