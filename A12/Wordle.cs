@@ -87,7 +87,6 @@ class Wordle {
       int y = 12;
       Write (new string (' ', WindowWidth));
       SetCursorPosition (x, y);
-      SetCursorPosition (x, y);
       ForegroundColor = color;
       WriteLine (message);
       ResetColor ();
