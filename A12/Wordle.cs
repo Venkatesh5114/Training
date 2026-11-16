@@ -29,7 +29,6 @@ class Wordle {
          EState state = UpdateState (guess, mWord);
          Display ();
          switch (state) {
-            case EState.Valid: break;
             case EState.Invalid:
                PrintMessage ($"{guess} is not a valid word", ConsoleColor.Yellow);
                break;
@@ -155,7 +154,7 @@ class Wordle {
                   }
                }
             }
-            if (mLetters[position].letter == '\0') {
+            if (mLetters[position] == default) {
                mLetters[position] = new (guessChar, ConsoleColor.DarkGray);
                UpdateKeyColor (guessChar, ConsoleColor.DarkGray);
             }
@@ -169,9 +168,9 @@ class Wordle {
 
    // Updates the keyboard color based on the highest priority color
    void UpdateKeyColor (char c, ConsoleColor color) {
-      if (mKeyColor.TryGetValue (c, out ConsoleColor keyColor)) {
-         if (keyColor is ConsoleColor.Blue && color is ConsoleColor.Green) mKeyColor[c] = color;
-      } else mKeyColor[c] = color;
+      if (!mKeyColor.TryGetValue (c, out ConsoleColor keyColor) || keyColor is ConsoleColor.Blue
+                                                                && color is ConsoleColor.Green)
+         mKeyColor[c] = color;
    }
    #endregion
 
