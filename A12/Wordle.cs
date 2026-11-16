@@ -1,10 +1,18 @@
-﻿using System.Drawing;
+﻿// ------------------------------------------------------------------------------------------------
+// Training ~ A training program for new joinees at Metamation, Batch - July 2026.
+// Copyright (c) TRUMPF Metamation India.
+// ------------------------------------------------------------------------------------------------
+// Wordle.cs
+// Implements the Wordle game by handling user input, word validation, and result display.
+// ------------------------------------------------------------------------------------------------
+
 using System.Text;
 using static System.Console;
 
 #region class Wordle ------------------------------------------------------------------------------
 class Wordle {
    #region Constructor ----------------------------------------------
+   /// <summary>Initializes the game with the supplied word list and target word</summary>
    public Wordle (WordsList wordsList) {
       mWordsList = wordsList;
       mWord = wordsList.GuessingWord;
@@ -12,18 +20,16 @@ class Wordle {
    #endregion
 
    #region Methods --------------------------------------------------
-   /// <summary>Runs the game by evaluating the guess and displaying the results</summary>
+   /// <summary>Runs the Wordle game until the word is guessed or attempts are exhausted</summary>
    public void Run () {
-      int row = 0;
-      CursorVisible = false;
       Display ();
       while (true) {
-         CursorTop = row;
+         CursorTop = mRow;
          string guess = GuessWord ();
-         EState state = UpdateState (guess.ToUpper (), mWord);
+         EState state = UpdateState (guess, mWord);
          Display ();
          switch (state) {
-            case EState.Valid: row++; break;
+            case EState.Valid: break;
             case EState.Invalid:
                PrintMessage ($"{guess} is not a valid word", ConsoleColor.Yellow);
                break;
@@ -42,28 +48,28 @@ class Wordle {
    // Displays the game board and updates the on-screen keyboard
    void Display () {
       OutputEncoding = new UnicodeEncoding ();
-      int mGame = WindowWidth / 2 - 5;
+      int gamePosition = WindowWidth / 2 - 5;
       CursorTop = 0;
-      int count = mLetters.Count;
       for (int i = 0; i < ATTEMPTS; i++) {
-         CursorLeft = mGame;
-         for (int j = 0; j < LETTERS; j++) {
-            if (i * 5 + j < count) {
-               var (c, color) = mLetters[i * 5 + j];
+         CursorLeft = gamePosition;
+         for (int j = 0; j < WORDSIZE; j++) {
+            int position = i * WORDSIZE + j;
+            if (mLetters[position].letter != '\0') {
+               var (c, color) = mLetters[position];
                DisplayLetter (c, color);
             } else Write ("\u00b7 ");
          }
          WriteLine ();
       }
-      int mKey = WindowWidth / 2 - 7;
-      CursorLeft = mKey - 2;
+      int keyPosition = WindowWidth / 2 - 7;
+      CursorLeft = keyPosition - 2;
       WriteLine (new string ('-', 17));
-      CursorLeft = mKey;
+      CursorLeft = keyPosition;
       for (int i = 0; i < 26; i++) {
          char c = (char)('A' + i);
          DisplayLetter (c, mKeyColor.TryGetValue (c, out ConsoleColor color) ? color
                                                                              : ConsoleColor.White);
-         if ((i + 1) % KEYPERROW == 0) { WriteLine (); CursorLeft = mKey; }
+         if ((i + 1) % KEYPERROW == 0) { WriteLine (); CursorLeft = keyPosition; }
       }
    }
 
@@ -89,7 +95,7 @@ class Wordle {
                   guess.Remove (guess.Length - 1, 1);
                   pos -= 2;
                   CursorLeft = rowPos + pos;
-                  Write ("\u25cc ");
+                  Write ("◌ ");
                   if (pos < 8) Write ("\u00b7 ");
                   CursorLeft = rowPos + pos;
                }
@@ -104,7 +110,7 @@ class Wordle {
                   Write ($"{c} ");
                   guess.Append (c);
                   pos += 2;
-                  if (pos < 10) Write ("◌ ");
+                  if(pos < 10) Write ("◌ ");
                }
                break;
          }
@@ -126,76 +132,74 @@ class Wordle {
    // Validates the guess, evaluates letter positions, and updates their colors
    EState UpdateState (string guess, string word) {
       if (mWordsList.IsValid (guess)) {
-         List<(char letter, int index)> guessedChar = [];
+         HashSet<int> matchedPositions = [];
          for (int index = 0; index < WORDSIZE; index++) {
             char ch = guess[index];
-            if (ch == word[index]) guessedChar.Add ((ch, index));
+            if (ch == word[index]) {
+               matchedPositions.Add (index);
+               mLetters[mRow * WORDSIZE + index] = new (ch, ConsoleColor.Green);
+               UpdateKeyColor (ch, ConsoleColor.Green);
+            }
          }
          for (int i = 0; i < WORDSIZE; i++) {
-            char c1 = guess[i];
-            bool added = false;
+            char guessChar = guess[i];
+            int position = mRow * WORDSIZE + i;
             for (int j = 0; j < WORDSIZE; j++) {
-               char c2 = word[j];
-               if (c1 == c2) {
-                  if (i == j) {
-                     mLetters.Add ((c1, ConsoleColor.Green));
-                     UpdateKeyColor (c1, ConsoleColor.Green);
-                     added = true;
-                     break;
-                  }
-                  if (i != j && !guessedChar.Contains ((c1, i)) && !guessedChar.Contains ((c1, j))) {
-                     mLetters.Add ((c1, ConsoleColor.Blue));
-                     UpdateKeyColor (c1, ConsoleColor.Blue);
-                     guessedChar.Add ((c1, j));
-                     added = true;
+               char wordChar = word[j];
+               if (guessChar == wordChar) {
+                  if (i != j && !matchedPositions.Contains (j)) {
+                     mLetters[position] = new (guessChar, ConsoleColor.Blue);
+                     UpdateKeyColor (guessChar, ConsoleColor.Blue);
+                     matchedPositions.Add (j);
                      break;
                   }
                }
             }
-            if (!added) {
-               mLetters.Add ((c1, ConsoleColor.DarkGray));
-               UpdateKeyColor (c1, ConsoleColor.DarkGray);
+            if (mLetters[position].letter == '\0') {
+               mLetters[position] = new (guessChar, ConsoleColor.DarkGray);
+               UpdateKeyColor (guessChar, ConsoleColor.DarkGray);
             }
          }
+         mRow++;
       } else return EState.Invalid;
       if (guess == word) return EState.Correct;
-      if (mLetters.Count == ATTEMPTS * LETTERS) return EState.AttemptsExhausted;
+      if (mRow == ATTEMPTS) return EState.AttemptsExhausted;
       return EState.Valid;
    }
 
+   // Updates the keyboard color based on the highest priority color
    void UpdateKeyColor (char c, ConsoleColor color) {
       if (mKeyColor.TryGetValue (c, out ConsoleColor keyColor)) {
-         if (keyColor is ConsoleColor.DarkGray && color is ConsoleColor.Green or ConsoleColor.Blue)
-            mKeyColor[c] = color;
-         else if (keyColor is ConsoleColor.Blue && color is ConsoleColor.Green)
-            mKeyColor[c] = color;
-      } else {
-         mKeyColor[c] = color;
-      }
+         if (keyColor is ConsoleColor.Blue && color is ConsoleColor.Green) mKeyColor[c] = color;
+      } else mKeyColor[c] = color;
    }
    #endregion
 
    #region Constants ------------------------------------------------
    const int KEYPERROW = 7;
-   const int LETTERS = 5;
    const int ATTEMPTS = 6;
    const int WORDSIZE = 5;
    #endregion
 
    #region Private Data ---------------------------------------------
-   List<(char letter, ConsoleColor color)> mLetters = [];
+   LetterColor[] mLetters = new LetterColor[ATTEMPTS * WORDSIZE];
    Dictionary<char, ConsoleColor> mKeyColor = [];
    WordsList mWordsList;
    string mWord;
+   int mRow = 0;
    #endregion
+}
+#endregion
 
-   #region Enum EState -------------------------------------------------
-   enum EState {
-      Valid,
-      Invalid,
-      Correct,
-      AttemptsExhausted
-   }
-   #endregion
+#region Struct LetterColor ------------------------------------------
+/// <summary>Stores a character and its associated display color</summary>
+record struct LetterColor (char letter, ConsoleColor color);
+#endregion
+#region Enum EState -------------------------------------------------
+enum EState {
+   Valid,
+   Invalid,
+   Correct,
+   AttemptsExhausted
 }
 #endregion
