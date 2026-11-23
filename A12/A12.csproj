@@ -13,12 +13,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="guess.txt">
+    <EmbeddedResource Include="guess.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Validate.txt">
+    </EmbeddedResource>
+    <EmbeddedResource Include="Validate.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
